@@ -1,11 +1,16 @@
 const { validationResult } = require("express-validator");
-const gravator = require("gravator");
+const gravatar = require("gravatar");
 const User = require("../modules/User");
-exports.UserPost = async (req, res) => {
-  const { name, email, pass } = req.body;
+const bcrypt = require("bcryptjs");
+const JWT = require("jsonwebtoken");
+const SecretKey = process.env.jwtSecret;
+
+exports.UserCreate = async (req, res) => {
+  const { name, email, password } = req.body;
   const error = validationResult(req);
 
   //   console.log(req.body);
+  //error checking
   if (!error.isEmpty()) {
     return res.status(400).json({
       errMessage: "send detail properly naming convention",
@@ -13,19 +18,32 @@ exports.UserPost = async (req, res) => {
   }
 
   try {
+    //checking user exit or not then return  message`User already exit pleases change your email address` if user is exit
     let user = await User.findOne({ email });
     if (user) {
       res.status(400).json({
         message: "User already exit pleases change your email address",
       });
     }
-    const avator = gravator.url(email, {
+    const avator = gravatar.url(email, {
       s: "200",
       r: "pg",
       d: "mm",
     });
-    res.json({
-      message: "user post api",
+
+    //securing password && encrypt password
+    const salt = await bcrypt.genSalt(10);
+    const hashpassword = bcrypt.hashSync(password, salt);
+    // saving or create user in mongodb
+    const registerUser = await User.create({
+      name,
+      email,
+      password: hashpassword,
+      avator,
+    });
+    res.status(200).json({
+      message: `register user id ${registerUser._id}`,
+      token: generateToken(registerUser._id),
     });
   } catch (error) {
     console.error(error);
@@ -33,8 +51,8 @@ exports.UserPost = async (req, res) => {
       message: "server error",
     });
   }
+};
 
-  //check user is exits or not
-
-  //encrypt password
+const generateToken = (_id) => {
+  return JWT.sign({ _id }, SecretKey, { expiresIn: "7d" });
 };

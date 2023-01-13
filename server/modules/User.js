@@ -15,6 +15,9 @@ const UserSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    avator: {
+      type: String,
+    },
   },
   {
     timestamps: true,
