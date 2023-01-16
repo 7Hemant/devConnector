@@ -53,6 +53,25 @@ exports.UserCreate = async (req, res) => {
   }
 };
 
+exports.login = async (req, res) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    res.status(400).json({
+      message: "invalid cendemtails",
+    });
+  }
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+
+  if (user && (await bcrypt.compare(password, user.password))) {
+    res.json({
+      _id: user?._id,
+      name: user?.name,
+      token: generateToken(user._id),
+    });
+  }
+};
+
 const generateToken = (_id) => {
   return JWT.sign({ _id }, SecretKey, { expiresIn: "7d" });
 };
