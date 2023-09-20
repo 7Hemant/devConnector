@@ -1,4 +1,6 @@
 node_modules
 .env
 
-coder:hemant
+dist/**
+
+coder:Hemant
